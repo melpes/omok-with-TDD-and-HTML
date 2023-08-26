@@ -4,20 +4,34 @@ import numpy as np
 
 
 class NotEmptyBoardError(Exception):
-    """보드에 돌을 놓으려는 자리가 빈칸이 아님"""
-    pass
+    def __str__(self) -> str:
+        error: str = "보드에 돌을 놓으려는 자리가 빈칸이 아님"
+        return super().__str__() + error
+
 class PutEmptyStoneError(Exception):
-    """빈칸을 의미하는 돌은 놓을 수 없음"""
-    pass
+    def __str__(self) -> str:
+        error: str = "빈칸을 의미하는 돌은 놓을 수 없음"
+        return super().__str__() + error
+
 class MinusIndexError(Exception):
-    """예외적인 상황을 배제하기 위해 마이너스 인덱싱은 금지"""
-    pass
+    def __str__(self) -> str:
+        error: str = "예외적인 상황을 배제하기 위해 마이너스 인덱싱은 금지"
+        return super().__str__() + error
+
 class PutSameAgainError(Exception):
-    """연속으로 같은 돌을 놓을 수 없음"""
-    pass
+    def __str__(self) -> str:
+        error: str = "연속으로 같은 돌을 놓을 수 없음"
+        return super().__str__() + error
+
 class WinError(Exception):
-    """한쪽 돌이 승리하여 더 이상 게임이 진행되지 못함"""
-    pass
+    def __str__(self) -> str:
+        error: str = "한쪽 돌이 승리하여 더 이상 게임이 진행되지 못함"
+        return super().__str__() + error
+
+class BlackFirstError(Exception):
+    def __str__(self) -> str:
+        error: str = "게임 첫 수는 흑돌이어야 함"
+        return super().__str__() + error
 
 
 class Stone(Enum):
@@ -32,12 +46,26 @@ class Stone(Enum):
 
 class Board:
     """오목판을 제공하고 오목 규칙들을 적용하여 게임을 진행함"""
+    
+    class InitBoard:
+        """게임 규칙에서 벗어나 ndarray 인덱싱으로 여러 수를 놓을 수 있음"""
+        def __init__(self, board: np.ndarray) -> None:
+            self.__board: np.ndarray = board
+    
+        def __setitem__(self, idx, stone: Stone):
+            self.__board[idx] = stone
+
+
     def __init__(self) -> None:
-        self.__board: np.ndarray = np.full([10, 10], Stone.EMPTY, dtype=Stone)
+        self.__board: np.ndarray = np.full([15, 15], Stone.EMPTY, dtype=Stone)
         "오목판"
         self.__last_stone: Stone = Stone.EMPTY
-        self.init_board: InitBoard = InitBoard(self.__board)
+        self.init_board: Board.InitBoard = Board.InitBoard(self.__board)
         """게임 규칙에서 벗어나 ndarray 인덱싱으로 여러 수를 놓을 수 있음"""
+
+    @property
+    def last_stone(self):
+        return self.__last_stone
 
     @property
     def shape(self):
@@ -45,7 +73,10 @@ class Board:
 
     def __str__(self) -> str:
         """print(board)로 보드판 현황 표현"""
-        result = ""
+        result = "\n\n"
+        result += "Board Shape : " + str(self.shape) + "\n"
+        result += "Last Stone : " + str(self.last_stone) + "\n"
+        result += "\nBoard View\n"
         for line in self.__board:
             for stone in line:
                 if stone == Stone.EMPTY:
@@ -96,9 +127,13 @@ class Board:
             raise MinusIndexError
         if self.__last_stone == stone:
             raise PutSameAgainError
+        if self.__last_stone == Stone.EMPTY and stone == Stone.WHITE:
+            raise BlackFirstError
 
         self.__board[idx] = stone
         self.__last_stone = stone
+
+        self.judge_win()
 
     def judge_win(self):
         board = self.__board.copy()
@@ -141,9 +176,6 @@ class Board:
             if stack == 5:
                 raise WinError
 
-class InitBoard:
-    def __init__(self, board: np.ndarray) -> None:
-        self.__board: np.ndarray = board
-
-    def __setitem__(self, idx, stone: Stone):
-        self.__board[idx] = stone
+class OmokAi:
+    def __init__(self, mystone: Stone) -> None:
+        self.mystone = mystone

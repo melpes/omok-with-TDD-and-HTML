@@ -153,6 +153,7 @@ class TestBoard(unittest.TestCase):
     def test_condition_to_win(self):
         """한 종류의 stone이 오목을 완성하면 WinError"""
         self.__assert_judge_win(((4,4,4,4,4),(1,2,3,4,5)))
+        self.__assert_judge_win(((1,2,3,4,5),(1,1,1,1,1)))
         self.__assert_judge_win(1)
         self.__assert_judge_win((slice(10), 1))
         self.__assert_judge_win((slice(1,6), 1))
@@ -161,6 +162,11 @@ class TestBoard(unittest.TestCase):
         self.__assert_judge_win([1,2,0])
 
         self.__assert_judge_win(((1,2,3,4,5),(1,2,3,4,5)))
+        self.__assert_judge_win(((1,2,3,4,5),(5,4,3,2,1)))
+        board: Board = Board()
+        board.init_board[(1,2,3,4,5),(5,4,3,2,1)] = Stone.WHITE
+        board.init_board[3,3] = Stone.BLACK
+        board.judge_win()
 
 if __name__ == "__main__":
     unittest.main()

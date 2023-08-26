@@ -1,15 +1,12 @@
 import unittest
 
+import numpy as np
 from board_calculator import (
-    BlackFirstError,
     Board,
-    MinusIndexError,
-    NotEmptyBoardError,
+    BoardErrors,
     OmokAi,
-    PutEmptyStoneError,
-    PutSameAgainError,
+    OmokAiErrors,
     Stone,
-    WinError,
 )
 
 
@@ -61,16 +58,16 @@ class TestBoard(unittest.TestCase):
         board: Board = Board()
         board.init_board[4,4] = Stone.WHITE
         
-        with self.assertRaises(NotEmptyBoardError):
+        with self.assertRaises(BoardErrors.NotEmptyBoardError):
             board[4,4] = Stone.BLACK
         
-        with self.assertRaises(NotEmptyBoardError):
+        with self.assertRaises(BoardErrors.NotEmptyBoardError):
             board[4,4] = Stone.WHITE
 
     def test_put_empty_error(self):
         """Stone.EMPTY를 올리는 경우 PutEmptyStoneError"""
         board: Board = Board()
-        with self.assertRaises(PutEmptyStoneError):
+        with self.assertRaises(BoardErrors.PutEmptyStoneError):
             board[3,5] = Stone.EMPTY
 
     def test_shape_immutable(self):
@@ -90,7 +87,7 @@ class TestBoard(unittest.TestCase):
     def test_put_minus_position(self):
         """board의 좌표는 음수를 허용하지 않음"""
         board: Board = Board()
-        with self.assertRaises(MinusIndexError):
+        with self.assertRaises(BoardErrors.MinusIndexError):
             board[-1,-3] = Stone.BLACK
 
     def test_put_same_stone_twice(self):
@@ -98,22 +95,22 @@ class TestBoard(unittest.TestCase):
         board: Board = Board()
         board[0,0] = Stone.BLACK
         
-        with self.assertRaises(PutSameAgainError):
+        with self.assertRaises(BoardErrors.PutSameAgainError):
             board[2,3] = Stone.WHITE
             board[2,4] = Stone.WHITE
 
         board[3,4] = Stone.BLACK
         board[5,4] = Stone.WHITE
-        with self.assertRaises(PutSameAgainError):
+        with self.assertRaises(BoardErrors.PutSameAgainError):
             board[6,3] = Stone.BLACK
             board[1,4] = Stone.BLACK
-        with self.assertRaises(PutSameAgainError):
+        with self.assertRaises(BoardErrors.PutSameAgainError):
             board[1,2:5] = Stone.WHITE
             
-        with self.assertRaises(PutSameAgainError):
+        with self.assertRaises(BoardErrors.PutSameAgainError):
             board[1:3,2] = Stone.BLACK
             
-        with self.assertRaises(PutSameAgainError):
+        with self.assertRaises(BoardErrors.PutSameAgainError):
             board[1:3,2:5] = Stone.WHITE
 
     def test_board_index_type(self):
@@ -151,11 +148,11 @@ class TestBoard(unittest.TestCase):
         self.assertTrue((board[1:3, 3:5] == Stone.WHITE).any())
 
     def __assert_judge_win(self, idx):
-        with self.assertRaises(WinError):
+        with self.assertRaises(BoardErrors.WinError):
             board: Board = Board()
             board.init_board[idx] = Stone.WHITE
             board.judge_win()
-        with self.assertRaises(WinError):
+        with self.assertRaises(BoardErrors.WinError):
             board: Board = Board()
             board.init_board[idx] = Stone.BLACK
             board.judge_win()
@@ -181,7 +178,7 @@ class TestBoard(unittest.TestCase):
     def test_black_first(self):
         """마지막으로 둔 수가 EMPTY일때 WHITE가 두면 BlackFirstError"""
         board: Board = Board()
-        with self.assertRaises(BlackFirstError):
+        with self.assertRaises(BoardErrors.BlackFirstError):
             board[5,5] = Stone.WHITE
 
     def test_play(self):
@@ -195,7 +192,7 @@ class TestBoard(unittest.TestCase):
         board[8,8] = Stone.WHITE
         board[4,4] = Stone.BLACK
         board[4,7] = Stone.WHITE
-        with self.assertRaises(WinError):
+        with self.assertRaises(BoardErrors.WinError):
             board[3,3] = Stone.BLACK
 
 
@@ -207,10 +204,19 @@ class TestOmokAi(unittest.TestCase):
 
     def test_has_empty_mystone(self):
         """Stone.EMPTY를 ai.mystone으로 가질 수 없음"""
+        with self.assertRaises(OmokAiErrors.EmptyMystoneError):
+            OmokAi(Stone.EMPTY)
         
     def test_has_scoring_system(self):
         """내부적으로 점수를 계산할 수 있는 ndarray를 가졌는가"""
         ai: OmokAi = OmokAi(Stone.BLACK)
+        self.assertIsInstance(ai.scoreboard, np.ndarray)
+
+    def test_is_scoringboard_type_int(self):
+        pass
+
+    def test_has_scoingboard_same_shape_with_Board(self):
+        pass
 
 if __name__ == "__main__":
     unittest.main()

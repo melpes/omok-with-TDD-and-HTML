@@ -3,35 +3,38 @@ from enum import Enum, auto
 import numpy as np
 
 
-class NotEmptyBoardError(Exception):
-    def __str__(self) -> str:
-        error: str = "보드에 돌을 놓으려는 자리가 빈칸이 아님"
-        return super().__str__() + error
+class BoardErrors:
+    pass
 
-class PutEmptyStoneError(Exception):
-    def __str__(self) -> str:
-        error: str = "빈칸을 의미하는 돌은 놓을 수 없음"
-        return super().__str__() + error
+    class PutEmptyStoneError(Exception):
+        def __str__(self) -> str:
+            error: str = "빈칸을 의미하는 돌은 놓을 수 없음"
+            return super().__str__() + error
 
-class MinusIndexError(Exception):
-    def __str__(self) -> str:
-        error: str = "예외적인 상황을 배제하기 위해 마이너스 인덱싱은 금지"
-        return super().__str__() + error
+    class NotEmptyBoardError(Exception):
+        def __str__(self) -> str:
+            error: str = "보드에 돌을 놓으려는 자리가 빈칸이 아님"
+            return super().__str__() + error
 
-class PutSameAgainError(Exception):
-    def __str__(self) -> str:
-        error: str = "연속으로 같은 돌을 놓을 수 없음"
-        return super().__str__() + error
-
-class WinError(Exception):
-    def __str__(self) -> str:
-        error: str = "한쪽 돌이 승리하여 더 이상 게임이 진행되지 못함"
-        return super().__str__() + error
-
-class BlackFirstError(Exception):
-    def __str__(self) -> str:
-        error: str = "게임 첫 수는 흑돌이어야 함"
-        return super().__str__() + error
+    class MinusIndexError(Exception):
+        def __str__(self) -> str:
+            error: str = "예외적인 상황을 배제하기 위해 마이너스 인덱싱은 금지"
+            return super().__str__() + error
+    
+    class PutSameAgainError(Exception):
+        def __str__(self) -> str:
+            error: str = "연속으로 같은 돌을 놓을 수 없음"
+            return super().__str__() + error
+    
+    class WinError(Exception):
+        def __str__(self) -> str:
+            error: str = "한쪽 돌이 승리하여 더 이상 게임이 진행되지 못함"
+            return super().__str__() + error
+    
+    class BlackFirstError(Exception):
+        def __str__(self) -> str:
+            error: str = "게임 첫 수는 흑돌이어야 함"
+            return super().__str__() + error
 
 
 class Stone(Enum):
@@ -116,19 +119,19 @@ class Board:
 
     def __setitem__(self, idx, stone: Stone) -> None:
         if type(idx) != tuple:
-            raise PutSameAgainError
+            raise BoardErrors.PutSameAgainError
         if type(idx[0]) != int or type(idx[1]) != int:
-            raise PutSameAgainError
+            raise BoardErrors.PutSameAgainError
         if self.__board[idx] != Stone.EMPTY:
-            raise NotEmptyBoardError
+            raise BoardErrors.NotEmptyBoardError
         if stone == Stone.EMPTY:
-            raise PutEmptyStoneError
+            raise BoardErrors.PutEmptyStoneError
         if idx[0] < 0 or idx[1] < 0:
-            raise MinusIndexError
+            raise BoardErrors.MinusIndexError
         if self.__last_stone == stone:
-            raise PutSameAgainError
+            raise BoardErrors.PutSameAgainError
         if self.__last_stone == Stone.EMPTY and stone == Stone.WHITE:
-            raise BlackFirstError
+            raise BoardErrors.BlackFirstError
 
         self.__board[idx] = stone
         self.__last_stone = stone
@@ -174,8 +177,26 @@ class Board:
             elif last_stone == stone:
                 stack += 1
             if stack == 5:
-                raise WinError
+                raise BoardErrors.WinError
+
+
+class OmokAiErrors:
+    pass
+    
+    class EmptyMystoneError(Exception):
+        def __str__(self) -> str:
+            error: str = "Stone.EMPTY를 ai.mystone으로 가질 수 없음"
+            return super().__str__() + error
+
 
 class OmokAi:
     def __init__(self, mystone: Stone) -> None:
-        self.mystone = mystone
+        if mystone == Stone.EMPTY:
+            raise OmokAiErrors.EmptyMystoneError
+
+        self.mystone: Stone = mystone
+        self.__scoreboard: np.ndarray = np.empty((1,1))
+
+    @property
+    def scoreboard(self):
+        return self.__scoreboard

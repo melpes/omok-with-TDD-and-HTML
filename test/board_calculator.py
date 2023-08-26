@@ -49,14 +49,14 @@ class Stone(Enum):
 
 class Board:
     """오목판을 제공하고 오목 규칙들을 적용하여 게임을 진행함"""
-    
+
     class InitBoard:
         """게임 규칙에서 벗어나 ndarray 인덱싱으로 여러 수를 놓을 수 있음"""
         def __init__(self, board: np.ndarray) -> None:
             self.__board: np.ndarray = board
     
-        def __setitem__(self, idx, stone: Stone):
-            self.__board[idx] = stone
+        def __setitem__(self, idx, stones):
+            self.__board[idx] = stones
 
 
     def __init__(self) -> None:
@@ -71,8 +71,15 @@ class Board:
         return self.__last_stone
 
     @property
+    def ndim(self):
+        return self.__board.ndim
+
+    @property
     def shape(self):
         return self.__board.shape
+
+    def viewcopy(self) -> np.ndarray:
+        return self.__board.copy()
 
     def __str__(self) -> str:
         """print(board)로 보드판 현황 표현"""
@@ -179,6 +186,10 @@ class Board:
             if stack == 5:
                 raise BoardErrors.WinError
 
+    def deepcopy(self):
+        newboard: Board = Board()
+        newboard.init_board[:] = self.__board
+        return newboard
 
 class OmokAiErrors:
     pass
@@ -190,12 +201,12 @@ class OmokAiErrors:
 
 
 class OmokAi:
-    def __init__(self, mystone: Stone) -> None:
+    def __init__(self, board: Board, mystone: Stone) -> None:
         if mystone == Stone.EMPTY:
             raise OmokAiErrors.EmptyMystoneError
 
         self.mystone: Stone = mystone
-        self.__scoreboard: np.ndarray = np.empty((1,1))
+        self.__scoreboard: np.ndarray = np.empty(board.shape, dtype=int)
 
     @property
     def scoreboard(self):

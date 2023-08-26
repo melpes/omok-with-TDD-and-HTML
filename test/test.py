@@ -11,6 +11,11 @@ from board_calculator import (
 
 
 class TestBoard(unittest.TestCase):
+    def test_is_ndim_two(self):
+        """board가 2차원 배열인가"""
+        board: Board = Board()
+        self.assertEqual(board.ndim, 2)
+
     def __assert_is_board_changed(
         self,
         board: Board,
@@ -195,28 +200,55 @@ class TestBoard(unittest.TestCase):
         with self.assertRaises(BoardErrors.WinError):
             board[3,3] = Stone.BLACK
 
+    def test_viewcopy_integrity(self):
+        """board.viewcopy() 값을 변경해도 원본에 영향이 없는지 확인"""
+        board: Board = Board()
+        arr: np.ndarray = board.viewcopy()
+        arr[3] = Stone.BLACK
+        self.assertTrue((board[:] == Stone.EMPTY).all())
+
+    def test_deepcopy_integrity(self):
+        """board.deepcopy() 기능이 board에 대해 깊은 복사인지 확인"""
+        board: Board = Board()
+        boardcopy: Board = board.deepcopy()
+        self.assertTrue((boardcopy.viewcopy() == board.viewcopy()).all())
+        boardcopy.init_board[3] = Stone.BLACK
+        self.assertFalse((boardcopy.viewcopy() == board.viewcopy()).all())
+
 
 class TestOmokAi(unittest.TestCase):
     def test_has_its_color_var(self):
-        """어떤 Stone을 본인의 수로 계산할지 설정"""
-        ai: OmokAi = OmokAi(Stone.BLACK)
+        """어떤 Stone을 본인의 수로 계산할지 설정할 수 있어야 함"""
+        board: Board = Board()
+        ai: OmokAi = OmokAi(board, Stone.BLACK)
         self.assertIsInstance(ai.mystone, Stone)
 
     def test_has_empty_mystone(self):
         """Stone.EMPTY를 ai.mystone으로 가질 수 없음"""
+        board: Board = Board()
         with self.assertRaises(OmokAiErrors.EmptyMystoneError):
-            OmokAi(Stone.EMPTY)
+            OmokAi(board, Stone.EMPTY)
         
     def test_has_scoring_system(self):
         """내부적으로 점수를 계산할 수 있는 ndarray를 가졌는가"""
-        ai: OmokAi = OmokAi(Stone.BLACK)
+        board: Board = Board()
+        ai: OmokAi = OmokAi(board, Stone.BLACK)
         self.assertIsInstance(ai.scoreboard, np.ndarray)
 
-    def test_is_scoringboard_type_int(self):
-        pass
-
     def test_has_scoingboard_same_shape_with_Board(self):
-        pass
+        """scoreboard는 보드와 같은 shape을 가져야 함"""
+        board: Board = Board()
+        ai: OmokAi = OmokAi(board, Stone.BLACK)
+        self.assertEqual(ai.scoreboard.shape, board.shape)
+
+    def test_has_output_to_board(self):
+        """스스로 보드에 착수할 수 있어야 함"""
+        board: Board = Board()
+        ai: OmokAi = OmokAi(board, Stone.BLACK)
+        boardcopy = board.deepcopy()
+        self.assertEqual(boardcopy, board)
+        ai.put_stone()
+        self.assertNotEqual(boardcopy, board)
 
 if __name__ == "__main__":
     unittest.main()

@@ -1,10 +1,14 @@
 import unittest
-from board_calculator import Board, Stone
-from board_calculator import NotEmptyBoardError
-from board_calculator import PutEmptyStoneError
-from board_calculator import MinusIndexError
-from board_calculator import PutSameAgainError
-import numpy as np
+
+from board_calculator import (
+    Board,
+    MinusIndexError,
+    NotEmptyBoardError,
+    PutEmptyStoneError,
+    PutSameAgainError,
+    Stone,
+    WinError,
+)
 
 
 class TestBoard(unittest.TestCase):
@@ -93,6 +97,70 @@ class TestBoard(unittest.TestCase):
         with self.assertRaises(PutSameAgainError):
             board[2,3] = Stone.WHITE
             board[2,4] = Stone.WHITE
+        board[3,4] = Stone.BLACK
+        board[5,4] = Stone.WHITE
+        with self.assertRaises(PutSameAgainError):
+            board[6,3] = Stone.BLACK
+            board[1,4] = Stone.BLACK
+        with self.assertRaises(PutSameAgainError):
+            board[1,2:5] = Stone.WHITE
+            
+        with self.assertRaises(PutSameAgainError):
+            board[1:3,2] = Stone.BLACK
+            
+        with self.assertRaises(PutSameAgainError):
+            board[1:3,2:5] = Stone.WHITE
+
+    def test_board_index_type(self):
+        """다양한 종류의 idx 타입에 대응하는지 확인"""
+        board: Board = Board()
+        
+        board[1,2]
+        board[1,2:5]
+        board[1:3,2]
+        board[1:3,2:5]
+        board[[2,3]]
+        board[(2,3),(4,3)]
+
+        board[1,2] = Stone.BLACK
+
+    def test_print_board(self):
+        """print(board)로 보드 보여주기"""
+
+    def test_init_board(self):
+        """board.init_board[idx]를 통해 stone 채우기"""
+        board: Board = Board()
+        
+        board.init_board[(1,2,3),(1,2,3)] = Stone.WHITE
+        self.assertTrue((board[(1,2,3),(1,2,3)] == Stone.WHITE).any())
+        
+        board.init_board[[1,2,3]] = Stone.BLACK
+        self.assertTrue((board[[1,2,3]] == Stone.BLACK).any())
+        
+        board.init_board[1:3, 3:5] = Stone.WHITE
+        self.assertTrue((board[1:3, 3:5] == Stone.WHITE).any())
+
+    def __assert_judge_win(self, idx):
+        with self.assertRaises(WinError):
+            board: Board = Board()
+            board.init_board[idx] = Stone.WHITE
+            board.judge_win()
+        with self.assertRaises(WinError):
+            board: Board = Board()
+            board.init_board[idx] = Stone.BLACK
+            board.judge_win()
+
+    def test_condition_to_win(self):
+        """한 종류의 stone이 오목을 완성하면 WinError"""
+        self.__assert_judge_win(((4,4,4,4,4),(1,2,3,4,5)))
+        self.__assert_judge_win(1)
+        self.__assert_judge_win((slice(10), 1))
+        self.__assert_judge_win((slice(1,6), 1))
+        self.__assert_judge_win((1, slice(1,6)))
+        self.__assert_judge_win((slice(1,6), slice(1,6)))
+        self.__assert_judge_win([1,2,0])
+
+        self.__assert_judge_win(((1,2,3,4,5),(1,2,3,4,5)))
 
 if __name__ == "__main__":
     unittest.main()

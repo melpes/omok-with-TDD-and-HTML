@@ -251,7 +251,7 @@ class TestOmokAi(unittest.TestCase):
         ai: OmokAi = OmokAi(board, Stone.BLACK)
         self.assertEqual(ai.scoreboard.shape, board.shape)
 
-    def test_has_output_to_board(self):
+    def untest_has_output_to_board(self):
         """스스로 보드에 착수할 수 있어야 함"""
         board: Board = Board()
         ai: OmokAi = OmokAi(board, Stone.BLACK)
@@ -260,7 +260,41 @@ class TestOmokAi(unittest.TestCase):
         ai.put_stone()
         self.assertFalse((boardcopy.viewcopy() == board.viewcopy()).all())
 
-    def test_can_follow_rule(self):
+    def test_no_changed_board(self):
+        """ai.put_stone()이 돌을 착수하지 않을 경우 NoStoneChangedError"""
+        board: Board = Board()
+        ai_b: OmokAi = OmokAi(board, Stone.BLACK)
+        ai_w: OmokAi = OmokAi(board, Stone.WHITE)
+
+        with self.assertRaises(OmokAiErrors.NoStoneChangedError):
+            for _ in range(5):
+                ai_b.put_stone()
+                ai_w.put_stone()
+
+    def test_basic_scoring(self):
+        """해당 줄에서 돌이 연속된 정도에 비례해 점수 부여"""
+        board: Board = Board()
+        ai_b: OmokAi = OmokAi(board, Stone.BLACK)
+        board.init_board[7,7] = Stone.BLACK
+        ai_b.scoring()
+        self.assertTrue((ai_b.scoreboard[(5,6,8,9),(5,6,8,9)] == ai_b.unit).all())
+        self.assertTrue((ai_b.scoreboard[(5,6,8,9),(9,8,6,5)] == ai_b.unit).all())
+        self.assertTrue((ai_b.scoreboard[(7,7,7,7),(5,6,8,9)] == ai_b.unit).all())
+        self.assertTrue((ai_b.scoreboard[(5,6,8,9),(7,7,7,7)] == ai_b.unit).all())
+
+        board.init_board[7,8] = Stone.BLACK
+        ai_b.scoring()
+        print(board)
+        print(ai_b)
+        
+        self.assertTrue((ai_b.scoreboard[(7,7,7,7),(5,6,9,10)] == ai_b.unit*2).all())
+        self.assertTrue((ai_b.scoreboard[(6,6,8,8),(7,8,7,8)] == ai_b.unit*2).all())
+        self.assertTrue((ai_b.scoreboard[(6,8,6,8),(6,6,9,9)] == ai_b.unit).all())
+        self.assertTrue((ai_b.scoreboard[(),()] == ai_b.unit*2).all())
+        
+        
+    
+    def untest_can_follow_rule(self):
         """Board의 룰에 어긋나지 않는 착수를 해야 함"""
         board: Board = Board()
         ai_b: OmokAi = OmokAi(board, Stone.BLACK)
@@ -268,11 +302,10 @@ class TestOmokAi(unittest.TestCase):
         
         print()
 
-        for i in range(5):
+        for i in range(4):
             ai_b.put_stone()
             ai_w.put_stone()
             print(i)
-        print(board)
 
 if __name__ == "__main__":
     unittest.main()

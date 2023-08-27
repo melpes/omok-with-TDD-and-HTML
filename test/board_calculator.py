@@ -1,6 +1,7 @@
 from enum import Enum, auto
 
 import numpy as np
+from numpy import ndarray
 
 
 class BoardErrors:
@@ -156,12 +157,12 @@ class Board:
 
     def judge_win(self):
         board = self.__board.copy()
-        for i in range(self.__board.shape[1]):
-            line: np.ndarray = board[:,i]
-            self.__find_5_stack(line)
-
         for i in range(self.__board.shape[0]):
             line: np.ndarray = board[i,:]
+            self.__find_5_stack(line)
+
+        for i in range(self.__board.shape[1]):
+            line: np.ndarray = board[:,i]
             self.__find_5_stack(line)
 
         for i in range(self.__board.shape[0]):
@@ -207,6 +208,16 @@ class OmokAiErrors:
         def __str__(self) -> str:
             error: str = "Stone.EMPTY를 ai.mystone으로 가질 수 없음"
             return super().__str__() + error
+    
+    class NoStoneChangedError(Exception):
+        def __str__(self) -> str:
+            error: str = "ai.put_stone()이 돌을 착수하지 않음"
+            return super().__str__() + error
+    
+    class Error(Exception):
+        def __str__(self) -> str:
+            error: str = ""
+            return super().__str__() + error
 
 class OmokAi:
     def __init__(self, board: Board, mystone: Stone) -> None:
@@ -215,37 +226,99 @@ class OmokAi:
 
         self.__board: Board = board
         self.mystone: Stone = mystone
-        self.__scoreboard: np.ndarray = np.empty(board.shape, dtype=int)
+        self.__scoreboard: np.ndarray = np.zeros(board.shape, dtype=int)
 
     @property
     def scoreboard(self):
         return self.__scoreboard
 
+    def __init_scoreboard(self):
+        self.__scoreboard: np.ndarray = np.zeros(self.__board.shape, dtype=int)
+
+    def __str__(self) -> str:
+        result = "\n"
+        result += "mystone : " + str(self.mystone) + '\n'
+        result += "\nScore View\n"
+        for line in self.__scoreboard:
+            for score in line:
+                result += str(score) + ' '                
+            result += '\n'
+        return result
+        
+
     def put_stone(self) -> None:
-        lst = [
-            (0,0),
-            (-1,-1),
-            (-1,0),
-            (-1,1),
-            (0,-1),
-            (0,1),
-            (1,-1),
-            (1,0),
-            (1,1)
-        ]
-        lst = [
-            np.array((0,0)),
-            np.array((-1,-1)),
-            np.array((-1,0)),
-            np.array((-1,1)),
-            np.array((0,-1)),
-            np.array((0,1)),
-            np.array((1,-1)),
-            np.array((1,0)),
-            np.array((1,1))
-        ]
-        for x,y in lst:
-            if self.__board[7+x,7+y] != Stone.EMPTY:
+        before: np.ndarray = self.__board.viewcopy()
+
+        pass
+
+        after: np.ndarray = self.__board.viewcopy()
+        if (before == after).all():
+            raise OmokAiErrors.NoStoneChangedError
+
+    def scoring(self):
+        self.__init_scoreboard()
+        for line, flag, i in self.__line_range():
+            stack: int = 0
+            line = np.concatenate([line, [Stone.EMPTY]])
+            line_score: np.ndarray = np.zeros(line.size, int)
+            for j, stone in enumerate(line):
+                if stone == self.mystone:
+                    stack += 1
+                elif stack != 0:
+                    self.__spread_stack(line, line_score, stack, j)
+                    stack = 0
+            line_score = line_score[:-1]
+            match flag:
+                case 'x':
+                    self.__scoreboard[i,:] += line_score
+                case 'y':
+                    self.__scoreboard[:,i] += line_score
+                case 'xy+':
+                    self.__scoreboard += np.diag(line_score, k=i)
+                case 'xy-':
+                    self.__scoreboard += np.diag(line_score, k=-i)
+                case 'yx+':
+                    self.__scoreboard += np.fliplr(np.diag(line_score, k=i))
+                case 'yx-':
+                    self.__scoreboard += np.fliplr(np.diag(line_score, k=-i))
+
+    def __spread_stack(self,
+        line: ndarray, line_score: ndarray, stack: int, j: int
+    ) -> None:
+        self.unit: int = 1
+        target_idx: tuple = j, j+1, j-stack-1, j-stack-2
+        
+        for idx in target_idx:
+            if idx >= line.size or idx < 0:
                 continue
-            self.__board[7+x,7+y] = self.mystone
-            break
+            
+            if line[idx] == Stone.EMPTY:
+                line_score[idx] += stack * self.unit
+                
+
+    def __line_range(self):
+        board = self.__board.viewcopy()
+        self.__board.print(board)
+        for i in range(self.__board.shape[0]):
+            line: np.ndarray = board[i,:]
+            yield line, "x", i
+
+        for i in range(self.__board.shape[1]):
+            line: np.ndarray = board[:,i]
+            yield line, "y", i
+
+        for i in range(self.__board.shape[0]):
+            line: np.ndarray = board.diagonal(i)
+            yield line, "xy+", i
+
+        for i in range(1, self.__board.shape[1]):
+            line: np.ndarray = board.diagonal(-i)
+            yield line, "xy-", i
+
+        for i in range(self.__board.shape[0]):
+            line: np.ndarray = np.fliplr(board).diagonal(i)
+            yield line, "yx+", i
+
+        for i in range(1, self.__board.shape[1]):
+            line: np.ndarray = np.fliplr(board).diagonal(-i)
+            yield line, "yx-", i

@@ -109,14 +109,24 @@ class TestBoard(unittest.TestCase):
         with self.assertRaises(BoardErrors.PutSameAgainError):
             board[6,3] = Stone.BLACK
             board[1,4] = Stone.BLACK
-        with self.assertRaises(BoardErrors.PutSameAgainError):
-            board[1,2:5] = Stone.WHITE
+
+    def test_put_use_np_slicing(self):
+        """슬라이싱, 행/열 할당 등으로 한번에 돌을 두는 경우 UseSliceError"""
+        board: Board = Board()
+        with self.assertRaises(BoardErrors.UseSliceError):
+            board[1,2:5] = Stone.BLACK
             
-        with self.assertRaises(BoardErrors.PutSameAgainError):
+        with self.assertRaises(BoardErrors.UseSliceError):
             board[1:3,2] = Stone.BLACK
             
-        with self.assertRaises(BoardErrors.PutSameAgainError):
-            board[1:3,2:5] = Stone.WHITE
+        with self.assertRaises(BoardErrors.UseSliceError):
+            board[1:3,2:5] = Stone.BLACK
+
+        with self.assertRaises(BoardErrors.UseSliceError):
+            board[1] = Stone.BLACK
+
+        with self.assertRaises(BoardErrors.UseSliceError):
+            board[[1,2]] = Stone.BLACK
 
     def test_board_index_type(self):
         """다양한 종류의 idx 타입에 대응하는지 확인"""
@@ -249,6 +259,20 @@ class TestOmokAi(unittest.TestCase):
         self.assertTrue((boardcopy.viewcopy() == board.viewcopy()).all())
         ai.put_stone()
         self.assertFalse((boardcopy.viewcopy() == board.viewcopy()).all())
+
+    def test_can_follow_rule(self):
+        """Board의 룰에 어긋나지 않는 착수를 해야 함"""
+        board: Board = Board()
+        ai_b: OmokAi = OmokAi(board, Stone.BLACK)
+        ai_w: OmokAi = OmokAi(board, Stone.WHITE)
+        
+        print()
+
+        for i in range(5):
+            ai_b.put_stone()
+            ai_w.put_stone()
+            print(i)
+        print(board)
 
 if __name__ == "__main__":
     unittest.main()

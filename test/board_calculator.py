@@ -26,6 +26,11 @@ class BoardErrors:
             error: str = "연속으로 같은 돌을 놓을 수 없음"
             return super().__str__() + error
     
+    class UseSliceError(Exception):
+        def __str__(self) -> str:
+            error: str = "슬라이싱을 이용하여 돌을 놓을 수 없음"
+            return super().__str__() + error
+    
     class WinError(Exception):
         def __str__(self) -> str:
             error: str = "한쪽 돌이 승리하여 더 이상 게임이 진행되지 못함"
@@ -126,9 +131,13 @@ class Board:
 
     def __setitem__(self, idx, stone: Stone) -> None:
         if type(idx) != tuple:
-            raise BoardErrors.PutSameAgainError
-        if type(idx[0]) != int or type(idx[1]) != int:
-            raise BoardErrors.PutSameAgainError
+            raise BoardErrors.UseSliceError
+        npidx = np.array(idx)
+        if npidx.ndim > 1:
+            raise BoardErrors.UseSliceError
+        if npidx.dtype == object:
+            raise BoardErrors.UseSliceError
+
         if self.__board[idx] != Stone.EMPTY:
             raise BoardErrors.NotEmptyBoardError
         if stone == Stone.EMPTY:
@@ -199,7 +208,6 @@ class OmokAiErrors:
             error: str = "Stone.EMPTY를 ai.mystone으로 가질 수 없음"
             return super().__str__() + error
 
-
 class OmokAi:
     def __init__(self, board: Board, mystone: Stone) -> None:
         if mystone == Stone.EMPTY:
@@ -214,4 +222,30 @@ class OmokAi:
         return self.__scoreboard
 
     def put_stone(self) -> None:
-        self.__board[7,7] = Stone.BLACK
+        lst = [
+            (0,0),
+            (-1,-1),
+            (-1,0),
+            (-1,1),
+            (0,-1),
+            (0,1),
+            (1,-1),
+            (1,0),
+            (1,1)
+        ]
+        lst = [
+            np.array((0,0)),
+            np.array((-1,-1)),
+            np.array((-1,0)),
+            np.array((-1,1)),
+            np.array((0,-1)),
+            np.array((0,1)),
+            np.array((1,-1)),
+            np.array((1,0)),
+            np.array((1,1))
+        ]
+        for x,y in lst:
+            if self.__board[7+x,7+y] != Stone.EMPTY:
+                continue
+            self.__board[7+x,7+y] = self.mystone
+            break

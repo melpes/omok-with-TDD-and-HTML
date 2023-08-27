@@ -205,9 +205,13 @@ class OmokAi:
         if mystone == Stone.EMPTY:
             raise OmokAiErrors.EmptyMystoneError
 
+        self.__board: Board = board
         self.mystone: Stone = mystone
         self.__scoreboard: np.ndarray = np.empty(board.shape, dtype=int)
 
     @property
     def scoreboard(self):
         return self.__scoreboard
+
+    def put_stone(self) -> None:
+        self.__board[7,7] = Stone.BLACK

@@ -246,9 +246,9 @@ class TestOmokAi(unittest.TestCase):
         board: Board = Board()
         ai: OmokAi = OmokAi(board, Stone.BLACK)
         boardcopy = board.deepcopy()
-        self.assertEqual(boardcopy, board)
+        self.assertTrue((boardcopy.viewcopy() == board.viewcopy()).all())
         ai.put_stone()
-        self.assertNotEqual(boardcopy, board)
+        self.assertFalse((boardcopy.viewcopy() == board.viewcopy()).all())
 
 if __name__ == "__main__":
     unittest.main()

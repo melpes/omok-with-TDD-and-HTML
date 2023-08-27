@@ -284,15 +284,13 @@ class TestOmokAi(unittest.TestCase):
 
         board.init_board[7,8] = Stone.BLACK
         ai_b.scoring()
-        print(board)
-        print(ai_b)
         
         self.assertTrue((ai_b.scoreboard[(7,7,7,7),(5,6,9,10)] == ai_b.unit*2).all())
         self.assertTrue((ai_b.scoreboard[(6,6,8,8),(7,8,7,8)] == ai_b.unit*2).all())
         self.assertTrue((ai_b.scoreboard[(6,8,6,8),(6,6,9,9)] == ai_b.unit).all())
-        self.assertTrue((ai_b.scoreboard[(),()] == ai_b.unit*2).all())
-        
-        
+        self.assertTrue((ai_b.scoreboard[(5,5,5,5,5,5),(5,6,7,8,9,10)] == ai_b.unit).all())
+        self.assertTrue((ai_b.scoreboard[(9,9,9,9,9,9),(5,6,7,8,9,10)] == ai_b.unit).all())
+
     
     def untest_can_follow_rule(self):
         """Board의 룰에 어긋나지 않는 착수를 해야 함"""

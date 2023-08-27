@@ -298,7 +298,6 @@ class OmokAi:
 
     def __line_range(self):
         board = self.__board.viewcopy()
-        self.__board.print(board)
         for i in range(self.__board.shape[0]):
             line: np.ndarray = board[i,:]
             yield line, "x", i

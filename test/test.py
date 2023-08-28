@@ -29,34 +29,31 @@ class TestBoard(unittest.TestCase):
     def test_can_put_stone_on_board(self):
         """보드 빈칸에 흑/백 돌을 올리는 경우"""
         board: Board = Board()
-        try:
-            self.__assert_is_board_changed(
-                board=board,
-                pos=(0,0),
-                stone_to_put=Stone.BLACK
-            )
-            self.__assert_is_board_changed(
-                board=board,
-                pos=(0,1),
-                stone_to_put=Stone.WHITE
-            )
-            self.__assert_is_board_changed(
-                board=board,
-                pos=(4,9),
-                stone_to_put=Stone.BLACK
-            )
-            self.__assert_is_board_changed(
-                board=board,
-                pos=(5,9),
-                stone_to_put=Stone.WHITE
-            )
-            self.__assert_is_board_changed(
-                board=board,
-                pos=(6,7),
-                stone_to_put=Stone.BLACK
-            )
-        except PutSameAgainError:
-            pass
+        self.__assert_is_board_changed(
+            board=board,
+            pos=(0,0),
+            stone_to_put=Stone.BLACK
+        )
+        self.__assert_is_board_changed(
+            board=board,
+            pos=(0,1),
+            stone_to_put=Stone.WHITE
+        )
+        self.__assert_is_board_changed(
+            board=board,
+            pos=(4,9),
+            stone_to_put=Stone.BLACK
+        )
+        self.__assert_is_board_changed(
+            board=board,
+            pos=(5,9),
+            stone_to_put=Stone.WHITE
+        )
+        self.__assert_is_board_changed(
+            board=board,
+            pos=(6,7),
+            stone_to_put=Stone.BLACK
+        )
 
     def test_can_add_stone_on_stone(self):
         """이미 돌이 있는 칸에 돌을 올리는 경우 NotEmptyBoardError"""

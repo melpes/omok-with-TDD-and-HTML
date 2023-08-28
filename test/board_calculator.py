@@ -61,7 +61,7 @@ class Board:
         def __init__(self, board: np.ndarray) -> None:
             self.__board: np.ndarray = board
     
-        def __setitem__(self, idx, stones):
+        def __setitem__(self, idx, stones) -> None:
             self.__board[idx] = stones
 
 
@@ -85,6 +85,7 @@ class Board:
         return self.__board.shape
 
     def viewcopy(self) -> np.ndarray:
+        """Board의 스톤 정보를 담고 있는 ndarray만 deepcopy"""
         return self.__board.copy()
 
     def __str__(self) -> str:
@@ -104,7 +105,7 @@ class Board:
             result += '\n'
         return result
 
-    def print(self, arr: np.ndarray):
+    def print(self, arr: np.ndarray[Stone,...]):
         """ndarray의 구성요소 시각화"""
         result = ""
         if arr.ndim == 1:
@@ -127,14 +128,17 @@ class Board:
                 result += '\n'
         print(result)
 
-    def __getitem__(self, idx) -> Stone:
+    def __getitem__(self, idx) -> Object:
+        """ndarray 인덱싱 문법에 따른 결과 반환"""
         return self.__board[idx]
 
-    def __setitem__(self, idx, stone: Stone) -> None:
+    def __setitem__(self, idx: tuple[int, int], stone: Stone) -> None:
+        """착수를 진행할 위치 idx는 반드시 tuple[int, int]형이어야 함"""
+        
         if type(idx) != tuple:
             raise BoardErrors.UseSliceError
         npidx = np.array(idx)
-        if npidx.ndim > 1:
+        if npidx.shape != (2,):
             raise BoardErrors.UseSliceError
         if npidx.dtype == object:
             raise BoardErrors.UseSliceError

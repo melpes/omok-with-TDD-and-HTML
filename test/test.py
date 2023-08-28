@@ -274,6 +274,8 @@ class TestOmokAi(unittest.TestCase):
         ai_b: OmokAi = OmokAi(board, Stone.BLACK)
         board.init_board[7,7] = Stone.BLACK
         ai_b.scoring()
+        print(board)
+        print(ai_b)
         self.assertTrue((ai_b.scoreboard[(5,6,8,9),(5,6,8,9)] == ai_b.unit).all())
         self.assertTrue((ai_b.scoreboard[(5,6,8,9),(9,8,6,5)] == ai_b.unit).all())
         self.assertTrue((ai_b.scoreboard[(7,7,7,7),(5,6,8,9)] == ai_b.unit).all())
@@ -281,6 +283,8 @@ class TestOmokAi(unittest.TestCase):
 
         board.init_board[7,8] = Stone.BLACK
         ai_b.scoring()
+        print(board)
+        print(ai_b)
         
         self.assertTrue((ai_b.scoreboard[(7,7,7,7),(5,6,9,10)] == ai_b.unit*2).all())
         self.assertTrue((ai_b.scoreboard[(6,6,8,8),(7,8,7,8)] == ai_b.unit*2).all())

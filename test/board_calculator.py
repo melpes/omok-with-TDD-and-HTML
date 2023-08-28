@@ -128,7 +128,7 @@ class Board:
                 result += '\n'
         print(result)
 
-    def __getitem__(self, idx) -> Object:
+    def __getitem__(self, idx) -> object:
         """ndarray 인덱싱 문법에 따른 결과 반환"""
         return self.__board[idx]
 
@@ -157,35 +157,35 @@ class Board:
         self.__board[idx] = stone
         self.__last_stone = stone
 
-        self.judge_win()
+        self.__judge_win()
 
-    def judge_win(self):
+    def __judge_win(self):
         board = self.__board.copy()
         for i in range(self.__board.shape[0]):
             line: np.ndarray = board[i,:]
-            self.__find_5_stack(line)
+            self.__find_5_stack_then_raise_winerror(line)
 
         for i in range(self.__board.shape[1]):
             line: np.ndarray = board[:,i]
-            self.__find_5_stack(line)
+            self.__find_5_stack_then_raise_winerror(line)
 
         for i in range(self.__board.shape[0]):
             line: np.ndarray = board.diagonal(i)
-            self.__find_5_stack(line)
+            self.__find_5_stack_then_raise_winerror(line)
 
         for i in range(self.__board.shape[1]):
             line: np.ndarray = board.diagonal(-i)
-            self.__find_5_stack(line)
+            self.__find_5_stack_then_raise_winerror(line)
 
         for i in range(self.__board.shape[0]):
             line: np.ndarray = np.fliplr(board).diagonal(i)
-            self.__find_5_stack(line)
+            self.__find_5_stack_then_raise_winerror(line)
 
         for i in range(self.__board.shape[1]):
             line: np.ndarray = np.fliplr(board).diagonal(-i)
-            self.__find_5_stack(line)
+            self.__find_5_stack_then_raise_winerror(line)
 
-    def __find_5_stack(self, line: np.ndarray):
+    def __find_5_stack_then_raise_winerror(self, line: np.ndarray):
         """입력받은 line에 대해 같은 돌이 5번 연속이면 WinError"""
         stack: int = 0
         last_stone: Stone = Stone.EMPTY
@@ -201,6 +201,7 @@ class Board:
                 raise BoardErrors.WinError
 
     def deepcopy(self):
+        """Board 인스턴스의 __board를 deepcopy한 새 Board 객체를 반환"""
         newboard: Board = Board()
         newboard.init_board[:] = self.__board
         return newboard
@@ -224,6 +225,7 @@ class OmokAiErrors:
             return super().__str__() + error
 
 class OmokAi:
+    """내부 스코어링 알고리즘을 통해 다음 수를 반환할 수 있는 클래스"""
     def __init__(self, board: Board, mystone: Stone) -> None:
         if mystone == Stone.EMPTY:
             raise OmokAiErrors.EmptyMystoneError
@@ -233,10 +235,11 @@ class OmokAi:
         self.__scoreboard: np.ndarray = np.zeros(board.shape, dtype=int)
 
     @property
-    def scoreboard(self):
-        return self.__scoreboard
+    def view_scoreboard(self):
+        return self.__scoreboard.copy()
 
     def __init_scoreboard(self):
+        """scoreboard 0으로 초기화"""
         self.__scoreboard: np.ndarray = np.zeros(self.__board.shape, dtype=int)
 
     def __str__(self) -> str:
@@ -251,6 +254,7 @@ class OmokAi:
         
 
     def put_stone(self) -> None:
+        """착수할때 전후 board차이가 없으면 에러"""
         before: np.ndarray = self.__board.viewcopy()
 
         pass
@@ -260,6 +264,7 @@ class OmokAi:
             raise OmokAiErrors.NoStoneChangedError
 
     def scoring(self):
+        """현재 board 상황에 맞춰 scoreboard 갱신"""
         self.__init_scoreboard()
         for line, flag, i in self.__line_range():
             stack: int = 0
@@ -289,6 +294,9 @@ class OmokAi:
     def __spread_stack(self,
         line: ndarray, line_score: ndarray, stack: int, j: int
     ) -> None:
+        """한 줄에 대해 mystone이 있으면 주변으로 score 전파. 
+        mystone이 여러개가 같이 있으면 주위 2칸에 해당 개수만큼 점수를 부여하며
+        점수를 부여하는 위치에 mystone이 있으면 해당 칸을 무시하고 다음 칸에 부여"""
         self.unit: int = 1
         target_idx: tuple = j, j+1, j-stack-1, j-stack-2
         
@@ -301,6 +309,8 @@ class OmokAi:
                 
 
     def __line_range(self):
+        """점수 계산을 위해 board의 가로, 세로, 양대각선, 음대각선을 
+        한줄씩 반환하는 제너레이터"""
         board = self.__board.viewcopy()
         for i in range(self.__board.shape[0]):
             line: np.ndarray = board[i,:]

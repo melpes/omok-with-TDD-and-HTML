@@ -77,6 +77,20 @@ class TestBoard(unittest.TestCase):
         board: Board = Board()
         with self.assertRaises(AttributeError):
             board.shape = (5,5)
+        with self.assertRaises(TypeError):
+            board.shape[0] = 5
+
+    def test_ndim_immutable(self):
+        """board.ndim을 변경할 수 없어야 함"""
+        board: Board = Board()
+        with self.assertRaises(AttributeError):
+            board.ndim = 1
+
+    def test_last_stone_immutable(self):
+        """board.last_stone을 변경할 수 없어야 함"""
+        board: Board = Board()
+        with self.assertRaises(AttributeError):
+            board.last_stone = Stone.WHITE
     
     def test_put_out_of_range(self):
         """board 크기 밖에 Stone을 올리는 경우 IndexError"""
@@ -145,6 +159,7 @@ class TestBoard(unittest.TestCase):
 
     def test_print_board(self):
         """print(board)로 보드 보여주기"""
+        self.assertFalse(True)
 
     def test_init_board(self):
         """board.init_board[idx]를 통해 stone 채우기"""
@@ -163,11 +178,11 @@ class TestBoard(unittest.TestCase):
         with self.assertRaises(BoardErrors.WinError):
             board: Board = Board()
             board.init_board[idx] = Stone.WHITE
-            board.judge_win()
+            board._Board__judge_win()
         with self.assertRaises(BoardErrors.WinError):
             board: Board = Board()
             board.init_board[idx] = Stone.BLACK
-            board.judge_win()
+            board._Board__judge_win()
 
     def test_condition_to_win(self):
         """한 종류의 stone이 오목을 완성하면 WinError"""
@@ -185,7 +200,7 @@ class TestBoard(unittest.TestCase):
         board: Board = Board()
         board.init_board[(1,2,3,4,5),(5,4,3,2,1)] = Stone.WHITE
         board.init_board[3,3] = Stone.BLACK
-        board.judge_win()
+        board._Board__judge_win()
 
     def test_black_first(self):
         """마지막으로 둔 수가 EMPTY일때 WHITE가 두면 BlackFirstError"""
@@ -236,17 +251,20 @@ class TestOmokAi(unittest.TestCase):
         with self.assertRaises(OmokAiErrors.EmptyMystoneError):
             OmokAi(board, Stone.EMPTY)
         
-    def test_has_scoring_system(self):
-        """내부적으로 점수를 계산할 수 있는 ndarray를 가졌는가"""
+    def test_is_scoring_system_readonly(self):
+        """내부 점수 시스템은 외부에서 읽을 수만 있고 변경이 불가해야 함"""
         board: Board = Board()
         ai: OmokAi = OmokAi(board, Stone.BLACK)
-        self.assertIsInstance(ai.scoreboard, np.ndarray)
+        self.assertIsNotNone(ai.view_scoreboard)
+        
+        ai.view_scoreboard[0,0] = 100
+        self.assertNotEqual(ai.view_scoreboard[0,0], 100)
 
     def test_has_scoingboard_same_shape_with_Board(self):
         """scoreboard는 보드와 같은 shape을 가져야 함"""
         board: Board = Board()
         ai: OmokAi = OmokAi(board, Stone.BLACK)
-        self.assertEqual(ai.scoreboard.shape, board.shape)
+        self.assertEqual(ai.view_scoreboard.shape, board.shape)
 
     def untest_has_output_to_board(self):
         """스스로 보드에 착수할 수 있어야 함"""
@@ -276,24 +294,24 @@ class TestOmokAi(unittest.TestCase):
         ai_b.scoring()
         print(board)
         print(ai_b)
-        self.assertTrue((ai_b.scoreboard[(5,6,8,9),(5,6,8,9)] == ai_b.unit).all())
-        self.assertTrue((ai_b.scoreboard[(5,6,8,9),(9,8,6,5)] == ai_b.unit).all())
-        self.assertTrue((ai_b.scoreboard[(7,7,7,7),(5,6,8,9)] == ai_b.unit).all())
-        self.assertTrue((ai_b.scoreboard[(5,6,8,9),(7,7,7,7)] == ai_b.unit).all())
+        self.assertTrue((ai_b.view_scoreboard[(5,6,8,9),(5,6,8,9)] == ai_b.unit).all())
+        self.assertTrue((ai_b.view_scoreboard[(5,6,8,9),(9,8,6,5)] == ai_b.unit).all())
+        self.assertTrue((ai_b.view_scoreboard[(7,7,7,7),(5,6,8,9)] == ai_b.unit).all())
+        self.assertTrue((ai_b.view_scoreboard[(5,6,8,9),(7,7,7,7)] == ai_b.unit).all())
 
         board.init_board[7,8] = Stone.BLACK
         ai_b.scoring()
         print(board)
         print(ai_b)
         
-        self.assertTrue((ai_b.scoreboard[(7,7,7,7),(5,6,9,10)] == ai_b.unit*2).all())
-        self.assertTrue((ai_b.scoreboard[(6,6,8,8),(7,8,7,8)] == ai_b.unit*2).all())
-        self.assertTrue((ai_b.scoreboard[(6,8,6,8),(6,6,9,9)] == ai_b.unit).all())
-        self.assertTrue((ai_b.scoreboard[(5,5,5,5,5,5),(5,6,7,8,9,10)] == ai_b.unit).all())
-        self.assertTrue((ai_b.scoreboard[(9,9,9,9,9,9),(5,6,7,8,9,10)] == ai_b.unit).all())
+        self.assertTrue((ai_b.view_scoreboard[(7,7,7,7),(5,6,9,10)] == ai_b.unit*2).all())
+        self.assertTrue((ai_b.view_scoreboard[(6,6,8,8),(7,8,7,8)] == ai_b.unit*2).all())
+        self.assertTrue((ai_b.view_scoreboard[(6,8,6,8),(6,6,9,9)] == ai_b.unit).all())
+        self.assertTrue((ai_b.view_scoreboard[(5,5,5,5,5,5),(5,6,7,8,9,10)] == ai_b.unit).all())
+        self.assertTrue((ai_b.view_scoreboard[(9,9,9,9,9,9),(5,6,7,8,9,10)] == ai_b.unit).all())
 
     
-    def untest_can_follow_rule(self):
+    def test_can_follow_rule(self):
         """Board의 룰에 어긋나지 않는 착수를 해야 함"""
         board: Board = Board()
         ai_b: OmokAi = OmokAi(board, Stone.BLACK)
@@ -305,6 +323,7 @@ class TestOmokAi(unittest.TestCase):
             ai_b.put_stone()
             ai_w.put_stone()
             print(i)
+        self.assertFalse(True)
 
 if __name__ == "__main__":
     unittest.main()
